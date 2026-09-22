@@ -1,0 +1,745 @@
+import React, { useState, useEffect, useCallback } from 'react';
+
+const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
+const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>;
+const LeafIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-700"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>;
+const ShoppingBagIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>;
+const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>;
+const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>;
+const MinusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>;
+const WhatsAppIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Z"/><path d="M14 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Z"/><path d="M9.5 13.5c.5 1 1.5 1 2.5 1s2-.5 2.5-1"/></svg>;
+
+const MOCK_DATA = {
+  categories: [
+    { id: 'bath-body', name: 'Bath & Body Care', desc: 'Bio-enzymatic cleansing and non-toxic herbal everyday protection' },
+    { id: 'mens-grooming', name: "Men's Grooming", desc: 'Science-backed essentials crafted for daily hair and skin conditioning.' },
+    { id: 'skin-care', name: 'Skin Care Collection', desc: 'Targeted botanical actives and bio-enzymatic care for balanced, glowing skin.' },
+    { id: 'lip-care', name: 'Lip Care Collection', desc: 'Cold-pressed plant oils and natural waxes for deep conditioning and tone restoration.' },
+    { id: 'perfumes', name: 'Botanical Fragrances', desc: 'Natural, artisan perfume formulations inspired by botanical extracts.' }
+  ],
+  products: [
+    { id: 'p1', categoryId: 'bath-body', name: 'Herbal Hand Wash', subtitle: 'Active Enzymes', desc: 'Cleanses impurities effectively without drying out or stripping skin moisture.', image: null, price: 1250, isBestseller: true },
+    { id: 'p2', categoryId: 'bath-body', name: 'Cold-Processed Soap Bar', subtitle: 'Handmade Traditional', desc: 'Purifies skin naturally, soothes irritation, and supports everyday body hygiene.', image: 'https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&q=80&w=400', price: 850 },
+    { id: 'p3', categoryId: 'bath-body', name: 'Mosquito Repellent', subtitle: '100% DEET-Free', desc: 'Botanical protection using Clove and Lavender essential oils.', image: 'https://lh3.googleusercontent.com/d/1RUd7zGv0irODpSQSpOSUbFZZHH3Ypool', price: 950, isBestseller: true },
+    { id: 'p4', categoryId: 'mens-grooming', name: 'Beard Oil', subtitle: 'Conditioning', desc: 'Softens coarse beard hair, eliminates itchiness, and deeply conditions the skin beneath.', image: 'https://lh3.googleusercontent.com/d/1rC7horIINhJj9Tj0aIZ8rq8UOilEVudY', price: 1800 },
+    { id: 'p5', categoryId: 'mens-grooming', name: 'Clarifying Face Wash', subtitle: 'Deep Clean', desc: 'Draws out daily pollution and excess oils from skin and beard.', image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=400', price: 1450 },
+    { id: 'p6', categoryId: 'mens-grooming', name: 'Anti-Acne Serum', subtitle: 'Blemish Control', desc: 'Soothes post shave irritation, bumps, and active blemishes.', image: 'https://lh3.googleusercontent.com/d/16HyugWEy0kVZZ8ufZRXvHFOU_Y62okDb', price: 2100, isBestseller: true },
+    { id: 'p7', categoryId: 'skin-care', section: 'Daily Defense & Treatment', name: 'Anti-Acne Serum', subtitle: 'Clarifying Treatment', desc: 'Soothes inflammation, targets breakouts, and balances excess sebum without stripping moisture.', image: 'https://lh3.googleusercontent.com/d/16HyugWEy0kVZZ8ufZRXvHFOU_Y62okDb', price: 2100 },
+    { id: 'p8', categoryId: 'skin-care', section: 'Daily Defense & Treatment', name: 'Hydrating Gel', subtitle: 'Deep Hydration', desc: 'Lightweight, non-sticky moisture lock that plumps and cools dehydrated skin.', image: 'https://lh3.googleusercontent.com/d/1Z82-yrN_Z2g5e-gCXmJp0wcZbXVejpo6', price: 1950 },
+    { id: 'p9', categoryId: 'skin-care', section: 'Daily Defense & Treatment', name: 'Botanical Sunscreen', subtitle: 'Daily Protection', desc: 'Clean, everyday UV protection with zero white cast and skin-soothing botanicals.', image: 'https://images.unsplash.com/photo-1556228720-1c2f689e47fb?auto=format&fit=crop&q=80&w=400', price: 2400 },
+    { id: 'p10', categoryId: 'skin-care', section: 'Refresh & Repair', name: 'Face Mist', subtitle: 'Instant Refresh', desc: 'Calms redness, sets daily moisture, and revitalizes tired skin throughout the day.', image: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&q=80&w=400', price: 1100 },
+    { id: 'p11', categoryId: 'skin-care', section: 'Refresh & Repair', name: 'Hand & Foot Cream', subtitle: 'Intense Nourishment', desc: 'Rich restorative barrier that softens calluses and deeply hydrates rough, dry skin.', image: 'https://lh3.googleusercontent.com/d/1ZomEwgtgZ8VC9zXMfQnU05IAjYFvwvON', price: 1350 },
+    { id: 'p12', categoryId: 'lip-care', name: 'Anti-Pigment Lipgel', subtitle: 'Tone Restoration', desc: 'Helps reduce hyperpigmentation, restores natural lip color, and deeply hydrates.', image: 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=400', price: 800, isBestseller: true },
+    { id: 'p13', categoryId: 'lip-care', name: 'Botanical Lip Balm', subtitle: 'Daily Conditioning', desc: 'Creates a long-lasting protective moisture barrier to prevent chapping and dryness.', image: 'https://lh3.googleusercontent.com/d/1pIjUCLTjK_GYqyXB3SaLHJZt-6OklHGA', price: 650 },
+    { id: 'p14', categoryId: 'perfumes', name: 'Signature Blend I', subtitle: 'Earthy & Woody', desc: 'A grounded fragrance featuring notes of cedar, vetiver, and subtle citrus.', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&q=80&w=400', price: 3500 },
+    { id: 'p15', categoryId: 'perfumes', name: 'Botanical Bloom', subtitle: 'Floral & Light', desc: 'Fresh jasmine and rosewood blend for an uplifting daily scent.', image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&q=80&w=400', price: 3500 },
+  ]
+};
+
+const formatPrice = (price) => `Rs. ${price.toLocaleString()}`;
+
+const Button = ({ children, variant = 'primary', className = '', size = 'md', ...props }) => {
+  const baseStyle = "inline-flex items-center justify-center rounded-md font-medium transition-all duration-300 ease-out active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
+  const sizes = {
+    sm: "px-4 py-2 text-sm",
+    md: "px-6 py-3",
+    lg: "px-8 py-4 text-lg"
+  };
+  const variants = {
+    primary: "bg-[#1a2f26] text-white hover:bg-[#2d4a3e] shadow-md hover:shadow-lg",
+    secondary: "bg-[#e8ecea] text-[#1a2f26] hover:bg-[#d1dbd6]",
+    outline: "border-2 border-[#1a2f26] text-[#1a2f26] hover:bg-[#1a2f26] hover:text-white",
+    ghost: "bg-transparent text-[#1a2f26] hover:bg-gray-100"
+  };
+  
+  return (
+    <button className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>
+      {children}
+    </button>
+  );
+};
+
+const ToastContainer = ({ toasts }) => (
+  <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    {toasts.map(toast => (
+      <div key={toast.id} className="bg-[#1a2f26] text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 animate-slide-up pointer-events-auto">
+        <CheckCircleIcon />
+        <p className="font-medium text-sm">{toast.message}</p>
+      </div>
+    ))}
+  </div>
+);
+
+const CartDrawer = ({ isOpen, onClose, cart, updateQuantity, removeFromCart }) => {
+  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+    let message = "Hello BioMerchant! I would like to place an order:%0A%0A";
+    cart.forEach(item => {
+      message += `- ${item.quantity}x ${item.product.name} (${formatPrice(item.product.price)})%0A`;
+    });
+    message += `%0A*Total: ${formatPrice(totalAmount)}*`;
+    message += "%0A%0APlease let me know the payment and delivery details.";
+    window.open(`https://wa.me/923115491294?text=${message}`, '_blank');
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white z-[70] shadow-2xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-2xl font-serif text-[#1a2f26]">Your Cart</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <XIcon />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+          {cart.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
+              <ShoppingBagIcon />
+              <p>Your cart is empty.</p>
+              <Button variant="secondary" onClick={onClose} className="mt-4">Continue Shopping</Button>
+            </div>
+          ) : (
+            cart.map(item => (
+              <div key={item.product.id} className="flex gap-4 bg-gray-50 p-4 rounded-xl relative group">
+                <img src={item.product.image} alt={item.product.name} className="w-20 h-20 object-cover rounded-md" />
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-medium text-[#1a2f26] pr-8">{item.product.name}</h3>
+                    <p className="text-[#2d4a3e] font-medium text-sm mt-1">{formatPrice(item.product.price)}</p>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white w-fit rounded-lg border border-gray-200 mt-2">
+                    <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 hover:bg-gray-50 text-gray-600 rounded-l-lg"><MinusIcon /></button>
+                    <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 hover:bg-gray-50 text-gray-600 rounded-r-lg"><PlusIcon /></button>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => removeFromCart(item.product.id)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {cart.length > 0 && (
+          <div className="border-t border-gray-100 p-6 bg-gray-50">
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-gray-600 font-medium">Subtotal</span>
+              <span className="text-xl font-serif text-[#1a2f26] font-bold">{formatPrice(totalAmount)}</span>
+            </div>
+            <Button onClick={handleCheckout} className="w-full flex items-center justify-center gap-2" size="lg">
+              <WhatsAppIcon /> Checkout via WhatsApp
+            </Button>
+            <p className="text-xs text-center text-gray-500 mt-4">Shipping and taxes calculated at checkout.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+const ProductCard = ({ product, onAddToCart }) => (
+  <div className="bg-white group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 flex flex-col h-full">
+    <div className="aspect-[4/3] overflow-hidden bg-gray-50 relative flex items-center justify-center">
+      {product.image ? (
+        <img 
+          src={product.image} 
+          alt={product.name} 
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          loading="lazy"
+        />
+      ) : (
+        <span className="text-gray-400 font-serif text-lg tracking-widest uppercase">Coming Soon</span>
+      )}
+      {product.isBestseller && (
+        <span className="absolute top-4 right-4 bg-[#d4af37] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm tracking-wide">
+          BESTSELLER
+        </span>
+      )}
+    </div>
+    <div className="p-6 flex flex-col flex-grow">
+      <div className="flex justify-between items-start mb-1">
+        <h3 className="text-xl font-serif text-[#1a2f26] pr-2">{product.name}</h3>
+        <span className="font-semibold text-[#2d4a3e] whitespace-nowrap">{formatPrice(product.price)}</span>
+      </div>
+      <p className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider">{product.subtitle}</p>
+      <p className="text-gray-600 text-sm mb-8 flex-grow leading-relaxed">{product.desc}</p>
+      
+      <div className="mt-auto">
+        <Button 
+          variant="outline" 
+          className="w-full group-hover:bg-[#1a2f26] group-hover:text-white group-hover:border-[#1a2f26]"
+          onClick={() => onAddToCart(product)}
+        >
+          Add to Cart
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
+const HeroBanner = ({ title, subtitle, imageUrl, align = 'center' }) => (
+  <div className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+    <div className="absolute inset-0 z-0">
+      <img src={imageUrl} alt="Background" className="w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/40"></div>
+    </div>
+    <div className={`relative z-10 px-6 max-w-7xl mx-auto w-full animate-fade-in-up flex flex-col ${align === 'center' ? 'items-center text-center' : 'items-start text-left'}`}>
+      <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif text-white mb-6 leading-tight drop-shadow-md">{title}</h1>
+      {subtitle && <p className={`text-lg md:text-2xl text-gray-100 font-light max-w-2xl drop-shadow-sm leading-relaxed ${align === 'center' ? 'text-center' : 'text-left'}`}>{subtitle}</p>}
+    </div>
+  </div>
+);
+
+const HomePage = ({ navigateTo, onAddToCart }) => {
+  const bestsellers = MOCK_DATA.products.filter(p => p.isBestseller);
+
+  return (
+    <div className="animate-fade-in">
+      <HeroBanner 
+        title={<>Science-Inspired <br/> Botanical Care.</>}
+        subtitle="Engineered for everyday life, crafted without compromise."
+        imageUrl="https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=2070"
+        align="center"
+      />
+
+      <section className="py-24 px-6 max-w-4xl mx-auto text-center">
+        <span className="text-[#2d4a3e] font-semibold tracking-widest uppercase text-sm mb-4 block">The BioMerchant Promise</span>
+        <h2 className="text-3xl md:text-4xl font-serif text-[#1a2f26] mb-8 leading-tight">Elevating personal care through biotechnology and nature.</h2>
+        <p className="text-gray-600 text-lg leading-relaxed mb-6 text-justify">
+          BioMerchant was founded in Islamabad to prove that effective personal care does not require harsh synthetic fillers, toxic repellents, or false claims. By combining botanical wisdom with modern formulation principles, we engineer clean products that deliver real, visible results.
+        </p>
+      </section>
+
+      <section className="py-24 bg-[#f9fafa]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-serif text-[#1a2f26] mb-4">Curated Collections</h2>
+              <p className="text-gray-500 max-w-xl">Explore our purpose-built ranges designed to harmonize with your body's natural systems.</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { id: 'skin-care', title: 'Skincare', desc: 'Targeted botanical actives for balanced, glowing skin.', image: 'https://lh3.googleusercontent.com/d/1vEXiWh2M2JSTsGq_1oli8Ad2eEFdzEEO' },
+              { id: 'mens-grooming', title: "Men's Grooming", desc: 'Science-backed essentials for hair & skin conditioning.', image: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&q=80&w=600' },
+              { id: 'bath-body', title: 'Bath & Body', desc: 'Bio-enzymatic cleansing and everyday protection.', image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=600' }
+            ].map(col => (
+              <div key={col.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 group overflow-hidden flex flex-col cursor-pointer border border-gray-100" onClick={() => navigateTo(col.id)}>
+                <div className="h-64 w-full overflow-hidden bg-gray-100 relative">
+                  <img src={col.image} alt={col.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" loading="lazy" />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
+                </div>
+                <div className="p-8 flex-grow flex flex-col">
+                  <h3 className="text-2xl font-serif text-[#1a2f26] mb-3 group-hover:text-[#2d4a3e] transition-colors">{col.title}</h3>
+                  <p className="text-gray-500 text-sm mb-6 flex-grow leading-relaxed text-justify">{col.desc}</p>
+                  <span className="text-[#2d4a3e] font-semibold text-sm uppercase tracking-wider flex items-center justify-between gap-2 group-hover:gap-4 transition-all w-full text-justify">
+                    Explore <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-gray-100">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-serif text-[#1a2f26] mb-4">Customer Favorites</h2>
+          <div className="w-16 h-1 bg-[#d4af37] mx-auto rounded-full mb-4"></div>
+          <p className="text-gray-500">Our most loved formulations.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {bestsellers.map(product => (
+             <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CategoryPage = ({ categoryId, onAddToCart }) => {
+  const category = MOCK_DATA.categories.find(c => c.id === categoryId);
+  const products = MOCK_DATA.products.filter(p => p.categoryId === categoryId);
+
+  const groupedProducts = products.reduce((acc, product) => {
+    const section = product.section || 'All Products';
+    if (!acc[section]) acc[section] = [];
+    acc[section].push(product);
+    return acc;
+  }, {});
+
+  const heroImages = {
+    'bath-body': 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=2070',
+    'mens-grooming': 'https://placehold.co/2070x800/e8ecea/1a2f26?text=Awaiting+Google+Drive+Link',
+    'skin-care': 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=2070',
+    'lip-care': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=2070',
+    'perfumes': 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&q=80&w=2070'
+  };
+
+  return (
+    <div className="animate-fade-in bg-stone-50 min-h-screen pb-24">
+       <HeroBanner 
+        title={category.name} 
+        subtitle={category.desc}
+        imageUrl={heroImages[categoryId] || heroImages['skin-care']}
+      />
+      
+      <div className="max-w-7xl mx-auto px-6 mt-20 relative">
+        {Object.entries(groupedProducts).map(([sectionTitle, sectionProducts]) => (
+          <div key={sectionTitle} className="mb-24">
+            {sectionTitle !== 'All Products' && (
+              <div className="flex items-center gap-4 mb-10">
+                <h2 className="text-2xl font-serif text-[#1a2f26] whitespace-nowrap">{sectionTitle}</h2>
+                <div className="h-px bg-gray-200 w-full"></div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {sectionProducts.map(product => (
+                <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+              ))}
+            </div>
+          </div>
+        ))}
+        {products.length === 0 && (
+          <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <LeafIcon className="mx-auto w-12 h-12 text-gray-300 mb-4" />
+            <h3 className="text-xl font-serif text-gray-800 mb-2">Formulations in Progress</h3>
+            <p className="text-gray-500 max-w-md mx-auto">Products for this collection are currently being updated and perfected. Check back soon.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AboutPage = () => (
+  <div className="animate-fade-in pb-24">
+    <HeroBanner 
+      title="Our Philosophy" 
+      subtitle="Bridging Ancient Botanical Wisdom & Modern Biotechnology."
+      imageUrl="https://images.unsplash.com/photo-1605481742918-0744eb88e7b9?auto=format&fit=crop&q=80&w=2070"
+    />
+
+    <div className="max-w-4xl mx-auto px-6 mt-24 space-y-32">
+      <section className="text-center">
+        <span className="text-[#d4af37] font-semibold tracking-widest uppercase text-sm mb-4 block">The Origin</span>
+        <h2 className="text-3xl md:text-4xl font-serif text-[#1a2f26] mb-8">Turning Science into Accessible Self-Care</h2>
+        <p className="text-gray-600 leading-relaxed text-lg text-justify md:text-center max-w-3xl mx-auto">
+          BioMerchant was founded in Islamabad as an ambitious biotechnology initiative. We set out to prove that effective personal care does not require harsh synthetic fillers, toxic repellents, or false claims. By combining botanical knowledge with scientific formulation principles, we engineer clean products that deliver real, visible results while harmonizing with your body's natural systems.
+        </p>
+      </section>
+
+      <section>
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-serif text-[#1a2f26] mb-4">Our Formulation Standards</h2>
+          <p className="text-gray-500">Uncompromising quality in every batch.</p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-8">
+          {[
+            { icon: "🌿", title: "Active Bio-Enzymes", desc: "We incorporate natural enzymes like Green Papaya for balanced exfoliation without micro-tears." },
+            { icon: "🛡️", title: "100% DEET-Free", desc: "Safe, botanical protection using pure Clove, Citronella, and Lavender essential oils." },
+            { icon: "💧", title: "Cold-Pressed Lipids", desc: "Nutrient-dense rosehip, castor, and argan seed oils extracted without heat to preserve potency." },
+            { icon: "🚫", title: "Clean Formulations", desc: "Strictly zero mineral oils, petroleum jelly, artificial colors, harsh synthetic fillers, or sulfates." }
+          ].map((item, i) => (
+            <div key={i} className="bg-stone-50 p-8 rounded-2xl border border-gray-100 flex gap-6 hover:shadow-md transition-shadow">
+              <span className="text-3xl">{item.icon}</span>
+              <div>
+                <h3 className="text-xl font-medium text-[#1a2f26] mb-2">{item.title}</h3>
+                <p className="text-gray-600 leading-relaxed text-sm">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </div>
+);
+
+const ContactPage = () => (
+  <div className="animate-fade-in pb-24 bg-stone-50 min-h-screen">
+    <HeroBanner 
+      title="Get in Touch" 
+      subtitle="Have a question or want to place a custom bulk order? We are here to help."
+      imageUrl="https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&q=80&w=2070"
+    />
+
+    <div className="max-w-6xl mx-auto px-6 mt-24">
+      <div className="grid lg:grid-cols-5 gap-12">
+        
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <h2 className="text-3xl font-serif text-[#1a2f26] mb-6">Contact Information</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed text-justify">Reach out to our formulation desk for product inquiries, wholesale requests, or specialized corporate gifting.</p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-start">
+            <div className="p-3 bg-[#e8ecea] rounded-full text-[#1a2f26]"><WhatsAppIcon /></div>
+            <div>
+              <h3 className="font-semibold text-[#1a2f26] mb-1">WhatsApp Support</h3>
+              <a href="https://wa.me/923115491294" target="_blank" rel="noreferrer" className="text-lg font-medium text-[#2d4a3e] hover:underline block mb-2">+92 311 5491294</a>
+              <p className="text-gray-500 text-sm">Fastest response for orders & advice.</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-start">
+            <div className="p-3 bg-[#e8ecea] rounded-full text-[#1a2f26]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-[#1a2f26] mb-1">Email Desk</h3>
+              <a href="mailto:biomerchant.official@gmail.com" className="text-[#2d4a3e] hover:underline break-all block mb-2">biomerchant.official@gmail.com</a>
+              <p className="text-gray-500 text-sm">General & wholesale inquiries.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-3">
+          <div className="bg-white p-8 md:p-12 rounded-3xl shadow-lg border border-gray-100">
+            <h2 className="text-2xl font-serif text-[#1a2f26] mb-8">Send us a message</h2>
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); alert("Inquiry sent successfully!"); }}>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                  <input type="text" required className="w-full bg-stone-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d4a3e] focus:border-transparent transition-shadow" placeholder="Jane Doe" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                  <input type="email" required className="w-full bg-stone-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d4a3e] focus:border-transparent transition-shadow" placeholder="jane@example.com" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <input type="text" className="w-full bg-stone-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d4a3e] focus:border-transparent transition-shadow" placeholder="How can we help?" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
+                <textarea required rows="5" className="w-full bg-stone-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d4a3e] focus:border-transparent transition-shadow resize-none" placeholder="Enter your message here..."></textarea>
+              </div>
+              <Button type="submit" size="lg" className="w-full">Submit Inquiry</Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const Header = ({ currentPage, navigateTo, cartItemCount, onOpenCart }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About Us' },
+    { id: 'contact', label: 'Contact' },
+  ];
+
+  const shopLinks = MOCK_DATA.categories.map(c => ({ id: c.id, label: c.name }));
+
+  const NavItem = ({ id, label, isDropdown }) => (
+    <button
+      onClick={() => { navigateTo(id); setIsMobileMenuOpen(false); }}
+      className={`font-medium transition-all duration-300 ${
+        currentPage === id ? 'text-[#1a2f26]' : 'text-gray-500 hover:text-[#1a2f26]'
+      } ${isDropdown ? 'block w-full text-left px-4 py-2 hover:bg-stone-50 rounded-md' : 'py-2 relative group'}`}
+    >
+      {label}
+      {!isDropdown && (
+        <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-[#1a2f26] transform origin-left transition-transform duration-300 ${currentPage === id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+      )}
+    </button>
+  );
+
+  return (
+    <header className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-white py-5'}`}>
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex justify-between items-center">
+          
+          <div className="flex items-center cursor-pointer group" onClick={() => navigateTo('home')}>
+            <img 
+              src="https://lh3.googleusercontent.com/d/1dI6ePUF9k9FXHQpYa0vSVWOz8vLByEZk" 
+              alt="BioMerchant Logo" 
+              className="w-12 h-12 object-contain mr-3 transition-transform duration-300 group-hover:scale-105" 
+            />
+            <span className="font-serif text-2xl font-bold tracking-tight text-[#1a2f26]">BioMerchant</span>
+          </div>
+
+          <nav className="hidden md:flex space-x-10 items-center">
+            <NavItem id="home" label="Home" />
+            
+            <div 
+              className="relative group"
+              onMouseEnter={() => setIsShopDropdownOpen(true)}
+              onMouseLeave={() => setIsShopDropdownOpen(false)}
+            >
+              <button className={`flex items-center font-medium py-2 transition-colors ${shopLinks.some(l=>l.id===currentPage) ? 'text-[#1a2f26]' : 'text-gray-500 group-hover:text-[#1a2f26]'}`}>
+                Shop <span className={`ml-1 mt-0.5 transition-transform duration-300 ${isShopDropdownOpen ? 'rotate-180' : ''}`}><ChevronDownIcon /></span>
+              </button>
+              
+              <div className={`absolute top-[100%] left-1/2 -translate-x-1/2 pt-4 w-64 transition-all duration-300 transform origin-top ${isShopDropdownOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible'}`}>
+                <div className="bg-white shadow-xl rounded-xl p-2 border border-gray-100">
+                  {shopLinks.map(link => (
+                    <NavItem key={link.id} id={link.id} label={link.label} isDropdown={true} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <NavItem id="about" label="Our Story" />
+            <NavItem id="contact" label="Contact" />
+            
+            <button onClick={onOpenCart} className="text-[#1a2f26] hover:bg-stone-100 p-2.5 rounded-full transition-all relative">
+              <ShoppingBagIcon />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#d4af37] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-fade-in">
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+          </nav>
+
+          <div className="md:hidden flex items-center gap-2">
+             <button onClick={onOpenCart} className="text-[#1a2f26] p-2 relative">
+              <ShoppingBagIcon />
+              {cartItemCount > 0 && (
+                <span className="absolute 0 right-0 bg-[#d4af37] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+            <button 
+              className="text-gray-600 p-2 hover:bg-stone-50 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <XIcon /> : <MenuIcon />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <div className={`md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl transition-all duration-300 origin-top ${isMobileMenuOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}>
+        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto flex flex-col gap-2">
+          <NavItem id="home" label="Home" isDropdown={true} />
+          
+          <div className="px-4 pt-4 pb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Shop Collections</div>
+          <div className="pl-4 border-l-2 border-stone-100 ml-4 flex flex-col gap-1">
+            {shopLinks.map(link => (
+              <NavItem key={link.id} id={link.id} label={link.label} isDropdown={true} />
+            ))}
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-stone-100 flex flex-col gap-2">
+            <NavItem id="about" label="Our Story" isDropdown={true} />
+            <NavItem id="contact" label="Contact Us" isDropdown={true} />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const Footer = ({ navigateTo }) => (
+  <footer className="bg-[#1a2f26] text-white pt-20 pb-10">
+    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+      
+      <div className="lg:col-span-1">
+        <div className="flex items-center gap-3 mb-6">
+          <img 
+            src="https://lh3.googleusercontent.com/d/1dI6ePUF9k9FXHQpYa0vSVWOz8vLByEZk" 
+            alt="BioMerchant Logo" 
+            className="w-12 h-12 object-contain bg-white rounded-md p-1" 
+          />
+          <span className="font-serif text-2xl font-bold tracking-tight">BioMerchant</span>
+        </div>
+        <p className="text-gray-400 text-sm leading-relaxed mb-6">
+          Science-inspired botanical care formulated in Islamabad. Engineered for everyday life, crafted without compromise.
+        </p>
+      </div>
+
+      <div>
+        <h4 className="font-serif text-lg font-bold mb-6 text-white">Collections</h4>
+        <ul className="space-y-4 text-gray-400 text-sm">
+          <li><button onClick={() => navigateTo('skin-care')} className="hover:text-[#d4af37] transition-colors">Skin Care Collection</button></li>
+          <li><button onClick={() => navigateTo('mens-grooming')} className="hover:text-[#d4af37] transition-colors">Men's Grooming</button></li>
+          <li><button onClick={() => navigateTo('bath-body')} className="hover:text-[#d4af37] transition-colors">Bath & Body Essentials</button></li>
+          <li><button onClick={() => navigateTo('perfumes')} className="hover:text-[#d4af37] transition-colors">Botanical Fragrances</button></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 className="font-serif text-lg font-bold mb-6 text-white">Company</h4>
+        <ul className="space-y-4 text-gray-400 text-sm">
+          <li><button onClick={() => navigateTo('about')} className="hover:text-white transition-colors">Our Story & Standards</button></li>
+          <li><button onClick={() => navigateTo('contact')} className="hover:text-white transition-colors">Contact Formulation Desk</button></li>
+          <li><button className="hover:text-white transition-colors">Shipping & Returns</button></li>
+          <li><button className="hover:text-white transition-colors">FAQs</button></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 className="font-serif text-lg font-bold mb-6 text-white">Direct Support</h4>
+        <div className="space-y-4 text-sm text-gray-400">
+          <p className="flex items-center gap-3">
+            <WhatsAppIcon /> 
+            <a href="https://wa.me/923115491294" target="_blank" rel="noreferrer" className="hover:text-white transition-colors font-medium">+92 311 5491294</a>
+          </p>
+          <p className="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <a href="mailto:biomerchant.official@gmail.com" className="hover:text-white transition-colors break-all">biomerchant.official@gmail.com</a>
+          </p>
+          <div className="pt-4 mt-4 border-t border-white/10">
+            <p>Formulation Hub:<br/>Islamabad, Pakistan</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
+      <p>© {new Date().getFullYear()} BioMerchant. All rights reserved.</p>
+      <div className="mt-4 md:mt-0 space-x-6">
+        <span className="cursor-pointer hover:text-white transition-colors">Privacy Policy</span>
+        <span className="cursor-pointer hover:text-white transition-colors">Terms of Service</span>
+      </div>
+    </div>
+  </footer>
+);
+
+export default function BioMerchantApp() {
+  const [currentPage, setCurrentPage] = useState('home');
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  const showToast = useCallback((message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  }, []);
+
+  const addToCart = useCallback((product) => {
+    setCart(prevCart => {
+      const existing = prevCart.find(item => item.product.id === product.id);
+      if (existing) {
+        return prevCart.map(item => 
+          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prevCart, { product, quantity: 1 }];
+    });
+    showToast(`Added ${product.name} to cart`);
+  }, [showToast]);
+
+  const updateQuantity = useCallback((productId, delta) => {
+    setCart(prevCart => prevCart.map(item => {
+      if (item.product.id === productId) {
+        const newQuantity = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }));
+  }, []);
+
+  const removeFromCart = useCallback((productId) => {
+    setCart(prevCart => prevCart.filter(item => item.product.id !== productId));
+  }, []);
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home': return <HomePage navigateTo={setCurrentPage} onAddToCart={addToCart} />;
+      case 'about': return <AboutPage />;
+      case 'contact': return <ContactPage />;
+      case 'bath-body':
+      case 'mens-grooming':
+      case 'skin-care':
+      case 'lip-care':
+      case 'perfumes':
+        return <CategoryPage categoryId={currentPage} onAddToCart={addToCart} />;
+      default: return <HomePage navigateTo={setCurrentPage} onAddToCart={addToCart} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col font-sans text-gray-800 selection:bg-[#d1dbd6] selection:text-[#1a2f26]">
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        
+        .animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fade-in-up { animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes fadeIn { 
+          from { opacity: 0; } 
+          to { opacity: 1; } 
+        }
+        @keyframes fadeInUp { 
+          from { opacity: 0; transform: translateY(30px); } 
+          to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(100%); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
+      
+      <Header 
+        currentPage={currentPage} 
+        navigateTo={setCurrentPage} 
+        cartItemCount={cartItemCount}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
+      
+      <CartDrawer 
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        updateQuantity={updateQuantity}
+        removeFromCart={removeFromCart}
+      />
+
+      <ToastContainer toasts={toasts} />
+      
+      <main className="flex-grow">
+        {renderPage()}
+      </main>
+      
+      <Footer navigateTo={setCurrentPage} />
+    </div>
+  );
+}
